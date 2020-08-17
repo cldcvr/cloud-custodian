@@ -999,8 +999,8 @@ class CloudWatchEventSource:
             self._client = self.session.client('events')
         return self._client
 
-    def get(self, rule_name):
-        return resource_exists(self.client.describe_rule, Name=rule_name)
+    def get(self, rule_name, **kwargs):
+        return resource_exists(self.client.describe_rule, Name=rule_name, **kwargs)
 
     @staticmethod
     def delta(src, tgt):
@@ -1105,8 +1105,10 @@ class CloudWatchEventSource:
         schedule = self.data.get('schedule')
         if schedule:
             params['ScheduleExpression'] = schedule
+        # get bus name from data or use default name
+        bus = params['EventBusName'] = self.data.get('event-bus', 'default')
 
-        rule = self.get(func.name)
+        rule = self.get(func.name, EventBusName=bus)
 
         if rule and self.delta(rule, params):
             log.debug("Updating cwe rule for %s" % func.name)
@@ -1131,7 +1133,7 @@ class CloudWatchEventSource:
 
         # Add Targets
         found = False
-        response = RuleRetry(self.client.list_targets_by_rule, Rule=func.name)
+        response = RuleRetry(self.client.list_targets_by_rule, Rule=func.name, EventBusName=bus)
         # CloudWatchE seems to be quite picky about function arns (no aliases/versions)
         func_arn = func.arn
 
@@ -1148,7 +1150,7 @@ class CloudWatchEventSource:
             self, func_arn))
 
         self.client.put_targets(
-            Rule=func.name, Targets=[{"Id": func.name, "Arn": func_arn}])
+            Rule=func.name, Targets=[{"Id": func.name, "Arn": func_arn}], EventBusName=bus)
 
         return True
 
