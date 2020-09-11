@@ -278,8 +278,13 @@ def generate(resource_types=()):
                 # utilization between policies that have different
                 # queries.
                 'query': {
-                    'type': 'array', 'items': {'type': 'object'}}
+                    'type': 'array', 'items': {'type': 'object'}},
 
+                # meta key used to define the severity level of a policy
+                'severity': {
+                    'enum': ['critical', 'high', 'medium', 'low', 'none']
+                },
+                'remediation': {'type': 'string'}
             },
         },
         'policy-mode': {
@@ -355,7 +360,6 @@ def generate(resource_types=()):
 def process_resource(
         type_name, resource_type, resource_defs, aliases=None,
         definitions=None, provider_name=None):
-
     r = resource_defs.setdefault(type_name, {'actions': {}, 'filters': {}})
 
     action_refs = []
