@@ -705,6 +705,12 @@ class AbstractLambdaFunction:
         if self.layers:
             conf['Layers'] = self.layers
 
+        if self.description and len(self.description) > 256:
+            conf['Description'] = conf['Description'].strip()[:256]
+            log.warning(
+                "Lambda function description trimmed to max length of 256"
+                " policy:%s " % (self.name))
+
         if self.environment['Variables']:
             conf['Environment'] = self.environment
 
